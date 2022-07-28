@@ -5,9 +5,13 @@ const {
   getRekapByStatusDB,
   totalRekapByKecamatanDB,
   getRekapByKecamatanDB,
-  getRekapTotalPenarikanDB,
-  getRekapTotalPenarikanKecamatanDB,
-  getRekapTotalPenarikanPetugasDB,
+  getRekapNominalKecamatanBulanDB,
+  getRekapNominalPetugasBulanDB,
+  getRekapPenarikanPetugasBulanDB,
+  getRekapPenarikanKecamatanBulanDB,
+  getRekapTotalNominalPerbulanDB,
+  getRekapTotalPenarikanPerbulanDB,
+  getTotalKeselurhanSaldoDB,
 } = require('./queries');
 
 module.exports = {
@@ -118,22 +122,52 @@ module.exports = {
       return res.status(statusCode || 500).json({ data: { message: error.message } });
     }
   },
-  getTotalNominalPenarikan: async (req, res) => {
+  getTotalSaldo: async (req, res) => {
+    let statusCode;
+
+    try {
+      const saldo = await getTotalKeselurhanSaldoDB();
+
+      if (!saldo) {
+        statusCode = 404;
+        throw new Error('Data tidak ditemukan.');
+      }
+
+      return res.status(200).json({ data: { message: 'success', total_saldo: saldo.total_saldo } });
+    } catch (error) {
+      return res.status(statusCode || 500).json({ data: { message: error.message } });
+    }
+  },
+  getAllRekapPerbulan: async (req, res) => {
     let statusCode;
 
     try {
       const date = new Date();
       const month = req.query.month || date.toLocaleDateString('en-US', { month: 'long' });
-      const year = parseInt(req.query.year) || date.getFullYear();
+      const year = req.query.year || date.getFullYear();
 
-      const result = await getRekapTotalPenarikanDB(month, year);
+      const nominal = await getRekapTotalNominalPerbulanDB(month, year);
+      const penarikan = await getRekapTotalPenarikanPerbulanDB(month, year);
+      const all_rekap = await totalAllRekapDB(month, year, '');
 
-      return res.status(200).json({ data: { message: 'success', result } });
+      if (!nominal && !penarikan && !all_rekap) {
+        statusCode = 404;
+        throw new Error('Data tidak ditemukan.');
+      }
+
+      return res.status(200).json({
+        data: {
+          message: 'success',
+          saldo: nominal.total,
+          penarikan: penarikan.total,
+          total_tabung: all_rekap.total_rekap,
+        },
+      });
     } catch (error) {
       return res.status(statusCode || 500).json({ data: { message: error.message } });
     }
   },
-  getTotalNominalKecamatan: async (req, res) => {
+  getRekapKecamatan: async (req, res) => {
     let statusCode;
 
     try {
@@ -142,14 +176,22 @@ module.exports = {
       const year = parseInt(req.query.year) || date.getFullYear();
       const id_kec = parseInt(req.params.id_kec) || 0;
 
-      const result = await getRekapTotalPenarikanKecamatanDB(id_kec, month, year);
+      const nominal = await getRekapNominalKecamatanBulanDB(id_kec, month, year);
+      const penarikan = await getRekapPenarikanKecamatanBulanDB(id_kec, month, year);
 
-      return res.status(200).json({ data: { message: 'success', result } });
+      if (!nominal && !penarikan) {
+        statusCode = 404;
+        throw new Error('Data tidak ditemukan.');
+      }
+
+      return res.status(200).json({
+        data: { message: 'success', nominal: nominal.total, penarikan: penarikan.total, id_kec },
+      });
     } catch (error) {
       return res.status(statusCode || 500).json({ data: { message: error.message } });
     }
   },
-  getTotalNominalPetugas: async (req, res) => {
+  getRekapPetugas: async (req, res) => {
     let statusCode;
 
     try {
@@ -158,9 +200,17 @@ module.exports = {
       const year = parseInt(req.query.year) || date.getFullYear();
       const id_user = parseInt(req.params.id_user) || 0;
 
-      const result = await getRekapTotalPenarikanPetugasDB(id_user, month, year);
+      const nominal = await getRekapNominalPetugasBulanDB(id_user, month, year);
+      const penarikan = await getRekapPenarikanPetugasBulanDB(id_user, month, year);
 
-      return res.status(200).json({ data: { message: 'success', result } });
+      if (!nominal && !penarikan) {
+        statusCode = 404;
+        throw new Error('Data tidak ditemukan.');
+      }
+
+      return res.status(200).json({
+        data: { message: 'success', nominal: nominal.total, penarikan: penarikan.total, id_user },
+      });
     } catch (error) {
       return res.status(statusCode || 500).json({ data: { message: error.message } });
     }

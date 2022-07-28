@@ -2,6 +2,17 @@ const { conn } = require('../../../config');
 
 let db = {};
 
+/**
+ *
+ * @param {*} fullname required
+ * @param {*} no_tlp required
+ * @param {*} alamat required
+ * @param {*} kode_tabung required
+ * @param {*} id_kec required
+ * @param {*} kelurahan required
+ * @description Menambahkan munfiq
+ */
+
 db.createMunfiqDB = (fullname, no_tlp, alamat, kode_tabung, id_kec, kelurahan) => {
   return new Promise((resolve, reject) => {
     conn.query(
@@ -17,6 +28,12 @@ db.createMunfiqDB = (fullname, no_tlp, alamat, kode_tabung, id_kec, kelurahan) =
     );
   });
 };
+
+/**
+ *
+ * @param {*} search optional
+ * @returns Total data munfiq
+ */
 
 db.totalMunfiqDB = (search) => {
   return new Promise((resolve, reject) => {
@@ -34,6 +51,14 @@ db.totalMunfiqDB = (search) => {
   });
 };
 
+/**
+ *
+ * @param {*} search optional
+ * @param {*} limit optional
+ * @param {*} offset optional
+ * @returns Semua data munfiq
+ */
+
 db.getAllMunfiqDB = (search, limit, offset) => {
   return new Promise((resolve, reject) => {
     conn.query(
@@ -49,6 +74,12 @@ db.getAllMunfiqDB = (search, limit, offset) => {
     );
   });
 };
+
+/**
+ *
+ * @param {*} id_kec required
+ * @description Generate kode tabung sebelum menambahkan munfiq
+ */
 
 db.generateKodeTabungDB = (id_kec) => {
   return new Promise((resolve, reject) => {
@@ -66,6 +97,12 @@ db.generateKodeTabungDB = (id_kec) => {
   });
 };
 
+/**
+ *
+ * @param {*} kode_tabung required
+ * @returns Data munfiq berdasarkan kode_tabung
+ */
+
 db.getMunfiqByKodeTabungDB = (kode_tabung) => {
   return new Promise((resolve, reject) => {
     conn.query(
@@ -81,6 +118,12 @@ db.getMunfiqByKodeTabungDB = (kode_tabung) => {
     );
   });
 };
+
+/**
+ *
+ * @param {*} id_munfiq required
+ * @returns Data munfiq berdasarkan id_munfiq
+ */
 
 db.getMunfiqByIdDB = (id_munfiq) => {
   return new Promise((resolve, reject) => {
@@ -98,10 +141,21 @@ db.getMunfiqByIdDB = (id_munfiq) => {
   });
 };
 
+/**
+ *
+ * @param {*} fullname required
+ * @param {*} no_tlp required
+ * @param {*} alamat required
+ * @param {*} id_kec required
+ * @param {*} kelurahan required
+ * @param {*} id_munfiq required
+ * @description Ubah data munfiq berdasarkan id_munfiq (Hanya admin)
+ */
+
 db.updateMunfiqByIdDB = (fullname, no_tlp, alamat, id_kec, kelurahan, id_munfiq) => {
   return new Promise((resolve, reject) => {
     conn.query(
-      `UPDATE munfiq SET fullname = ?, no_tlp = ?, alamat = ?, id_kec =?, kelurahan = ? WHERE id_munfiq = ?`,
+      `UPDATE munfiq SET fullname = ?, no_tlp = ?, alamat = ?, id_kec = ?, kelurahan = ? WHERE id_munfiq = ?`,
       [fullname, no_tlp, alamat, id_kec, kelurahan, id_munfiq],
       (err) => {
         if (err) {
@@ -113,6 +167,12 @@ db.updateMunfiqByIdDB = (fullname, no_tlp, alamat, id_kec, kelurahan, id_munfiq)
     );
   });
 };
+
+/**
+ *
+ * @param {*} id_munfiq required
+ * @description Hapus data munfiq (Not recommended)
+ */
 
 db.deleteMunfiqByIdDB = (id_munfiq) => {
   return new Promise((resolve, reject) => {

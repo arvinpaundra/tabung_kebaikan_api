@@ -10,8 +10,8 @@ const {
 
 const router = require('express').Router();
 
-router.post('/', isUserLogin, addMunfiq);
 router.get('/', isUserLogin, getAllMunfiq);
+router.post('/tambah', isUserLogin, addMunfiq);
 router.get('/check?', isUserLogin, getMunfiqByKodeTabung);
 router.get('/:id_munfiq', isUserLogin, getDetailMunfiq);
 router.put('/:id_munfiq/edit', isUserLogin, isAdmin, updateMunfiq);

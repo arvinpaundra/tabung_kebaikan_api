@@ -20,7 +20,7 @@ module.exports = {
         throw new Error('Data harus lengkap.');
       } else if (kode_kec.length > 3) {
         statusCode = 400;
-        throw new Error('Hanya boleh max 3 karakter.');
+        throw new Error('Kode max 3 karakter.');
       }
 
       const kecamatan = await beforeActKecDB(nama_kec, kode_kec);
@@ -36,7 +36,7 @@ module.exports = {
         }
       }
 
-      await createKecamatanDB(nama_kec, kode_kec);
+      await createKecamatanDB(nama_kec, kode_kec.toUpperCase());
 
       return res.status(201).json({ data: { message: 'success' } });
     } catch (error) {
@@ -71,7 +71,7 @@ module.exports = {
     let statusCode;
 
     try {
-      const { id_kec } = parseInt(req.params.id_kec);
+      const id_kec = parseInt(req.params.id_kec);
 
       if (id_kec < 1) {
         statusCode = 400;
@@ -95,7 +95,7 @@ module.exports = {
 
     try {
       const { nama_kec } = req.body;
-      const { id_kec } = parseInt(req.params.id_kec);
+      const id_kec = parseInt(req.params.id_kec);
 
       if (id_kec < 1) {
         statusCode = 400;

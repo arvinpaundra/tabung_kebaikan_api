@@ -4,9 +4,10 @@ const { rootPath } = require('../../../config');
 const {
   totalPetugasDB,
   getAllPetugasDB,
-  getPetugasByIdDB,
+  getUserByIdDB,
   updatePetugasByIdDB,
   deletePetugasByIdDB,
+  getPetugasByUsernameDB,
 } = require('./queries');
 const {
   totalPenarikanPetugasDB,
@@ -46,14 +47,14 @@ module.exports = {
     let statusCode;
 
     try {
-      const id_user = parseInt(req.params.id_user);
+      const username = req.params.username;
 
-      if (id_user < 1) {
+      if (!username) {
         statusCode = 400;
         throw new Error('error');
       }
 
-      const petugas = await getPetugasByIdDB(id_user);
+      const petugas = await getPetugasByUsernameDB(username);
 
       if (!petugas) {
         statusCode = 404;
@@ -63,6 +64,31 @@ module.exports = {
       delete petugas.password;
 
       return res.status(200).json({ data: { message: 'success', result: petugas } });
+    } catch (error) {
+      return res.status(statusCode || 500).json({ data: { message: error.message } });
+    }
+  },
+  getDetailUser: async (req, res) => {
+    let statusCode;
+
+    try {
+      const id_user = parseInt(req.params.id_user) || 0;
+
+      if (!id_user) {
+        statusCode = 400;
+        throw new Error('error');
+      }
+
+      const user = await getUserByIdDB(id_user);
+
+      if (!user) {
+        statusCode = 404;
+        throw new Error('Data tidak ditemukan.');
+      }
+
+      delete user.password;
+
+      return res.status(200).json({ data: { message: 'success', result: user } });
     } catch (error) {
       return res.status(statusCode || 500).json({ data: { message: error.message } });
     }
@@ -133,15 +159,11 @@ module.exports = {
 
     try {
       const { fullname, username } = req.body;
-      const id_kec = parseInt(req.params.id_user);
       const id_user = parseInt(req.params.id_user);
 
       if (!fullname || !username) {
         statusCode = 400;
         throw new Error('Data harus lengkap.');
-      } else if (id_kec < 1) {
-        statusCode = 400;
-        throw new Error('error');
       }
 
       if (req.file) {
@@ -159,14 +181,11 @@ module.exports = {
 
           src.on('end', async () => {
             try {
-              const petugas = await getPetugasByIdDB(id_user);
+              const petugas = await getUserByIdDB(id_user);
 
               if (!petugas) {
                 statusCode = 404;
                 throw new Error('Data tidak ditemukan.');
-              } else if (username === petugas.username) {
-                statusCode = 409;
-                throw new Error('Username sudah tersedia.');
               }
 
               let currentImage = `${rootPath}/public/uploads/profiles/${petugas.profile_picture}`;
@@ -177,7 +196,7 @@ module.exports = {
                 });
               }
 
-              await updatePetugasByIdDB(fullname, username, id_kec, filename, id_user);
+              await updatePetugasByIdDB(fullname, username, filename, id_user);
 
               return res.status(200).json({ data: { message: 'success' } });
             } catch (error) {
@@ -189,17 +208,14 @@ module.exports = {
         }
       } else {
         try {
-          const petugas = await getPetugasByIdDB(id_user);
+          const petugas = await getUserByIdDB(id_user);
 
           if (!petugas) {
             statusCode = 404;
             throw new Error('Data tidak ditemukan.');
-          } else if (username === petugas.username) {
-            statusCode = 409;
-            throw new Error('Username sudah tersedia.');
           }
 
-          await updatePetugasByIdDB(fullname, username, id_kec, petugas.profile_picture, id_user);
+          await updatePetugasByIdDB(fullname, username, petugas.profile_picture, id_user);
 
           return res.status(200).json({ data: { message: 'success' } });
         } catch (error) {
@@ -221,7 +237,7 @@ module.exports = {
         throw new Error('error');
       }
 
-      const petugas = await getPetugasByIdDB(id_user);
+      const petugas = await getUserByIdDB(id_user);
 
       if (!petugas) {
         statusCode = 404;

@@ -1,10 +1,16 @@
 const { getMunfiqByKodeTabungDB } = require('../../munfiq/controller/queries');
-const { beforeUpdateRekapDB, updateCurrentRekapDB } = require('../../rekap/controller/queries');
+const {
+  beforeUpdateRekapDB,
+  updateCurrentRekapDB,
+  afterUpdatePenarikanDB,
+} = require('../../rekap/controller/queries');
 const {
   createPenarikanDB,
   totalPenarikanDB,
   getAllPenarikanDB,
   updatePenarikanByIdDB,
+  getPenarikanTerbaruDB,
+  getDetailPenarikanDB,
 } = require('./queries');
 
 module.exports = {
@@ -113,6 +119,25 @@ module.exports = {
         statusCode = 409;
         throw new Error('error');
       }
+
+      const penarikan = await getDetailPenarikanDB(id_penarikan);
+
+      return res.status(200).json({ data: { message: 'success', result: penarikan } });
+    } catch (error) {
+      return res.status(statusCode || 500).json({ data: { message: error.message } });
+    }
+  },
+  getPenarikanTerbaru: async (req, res) => {
+    let statusCode;
+    try {
+      const penarikan = await getPenarikanTerbaruDB();
+
+      if (!penarikan) {
+        statusCode = 404;
+        throw new Error('Data tidak ditemukan');
+      }
+
+      return res.status(200).json({ data: { message: 'success', result: penarikan } });
     } catch (error) {
       return res.status(statusCode || 500).json({ data: { message: error.message } });
     }
@@ -123,20 +148,28 @@ module.exports = {
     try {
       const nominal = parseInt(req.body.nominal);
       const id_penarikan = parseInt(req.params.id_penarikan);
+      const kode_tabung = req.query.kode_tabung;
+      const tgl_tarik = req.body.tgl_tarik;
+
+      const date = new Date(tgl_tarik);
+
+      const month = date.toLocaleDateString('en-US', { month: 'long' });
+      const year = date.getFullYear();
 
       if (id_penarikan < 0 || !id_penarikan) {
         statusCode = 409;
         throw new Error('error');
-      } else if (nominal < 0 || !nominal) {
+      } else if (nominal < 0 || !nominal || !kode_tabung) {
         statusCode = 400;
         throw new Error('invalid');
       }
 
       await updatePenarikanByIdDB(nominal, id_penarikan);
+      await afterUpdatePenarikanDB(month, year, nominal, kode_tabung);
 
       return res.status(200).json({ data: { message: 'success' } });
     } catch (error) {
-      return res.satus(statusCode || 500).json({ data: { message: error.message } });
+      return res.status(statusCode || 500).json({ data: { message: error.message } });
     }
   },
 };

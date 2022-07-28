@@ -2,51 +2,15 @@ const { conn } = require('../../../config');
 
 let db = {};
 
-// db.createRekap = (bulan, tahun, status, id_munfiq, id_penarikan) => {
-//   return new Promise((resolve, reject) => {
-//     conn.query(`INSERT INTO rekap (bulan, tahun, status, id_munfiq, id_penarikan) VALUES (?, ?, ?, ?, ?)`, [bulan])
-//   })
-// }
-
 /**
  *
- * @param {*} bulan
- * @param {*} tahun
- * @param {*} search
- * @param {*} limit
- * @param {*} offset
- * @returns Semua rekapan pada admin berdasarkan tahun dan bulan
+ * @returns Total keseluruhan pendapatan saldo penarikan tabung
  */
 
-db.getAllRekapDB = (bulan, tahun, search, limit, offset) => {
+db.getTotalKeselurhanSaldoDB = () => {
   return new Promise((resolve, reject) => {
     conn.query(
-      `SELECT rekap.*, munfiq.id_munfiq, munfiq.fullname, kecamatan.id_kec, kecamatan.nama_kec FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ?) AND (munfiq.fullname LIKE ? OR kecamatan.nama_kec LIKE ? OR munfiq.kode_tabung LIKE ?) ORDER BY rekap.id_rekap DESC LIMIT ? OFFSET ?`,
-      [bulan, tahun, `%${search}%`, `%${search}%`, `%${search}%`, limit, offset],
-      (err, result) => {
-        if (err) {
-          return reject(err);
-        }
-
-        return resolve(result);
-      },
-    );
-  });
-};
-
-/**
- *
- * @param {*} bulan
- * @param {*} tahun
- * @param {*} search
- * @returns Total data rekapan perbulan
- */
-
-db.totalAllRekapDB = (bulan, tahun, search) => {
-  return new Promise((resolve, reject) => {
-    conn.query(
-      `SELECT COUNT(rekap.id_rekap) AS total_rekap FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ?) AND (munfiq.fullname LIKE ? OR kecamatan.nama_kec LIKE ? OR rekap.kode_tabung LIKE ?)`,
-      [bulan, tahun, `%${search}%`, `%${search}%`, `%${search}%`, search],
+      `SELECT IFNULL(SUM(nominal), 0) AS total_saldo FROM rekap WHERE status = '1'`,
       (err, result) => {
         if (err) {
           return reject(err);
@@ -60,20 +24,19 @@ db.totalAllRekapDB = (bulan, tahun, search) => {
 
 /**
  *
- * @param {*} status
- * @param {*} bulan
- * @param {*} tahun
- * @param {*} search
- * @param {*} limit
- * @param {*} offset
- * @returns Rekapan berdasarkan status penarikan, tahun dan bulan
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @param {*} search optional
+ * @param {*} limit optional
+ * @param {*} offset optional
+ * @returns Semua rekapan pada admin berdasarkan tahun dan bulan
  */
 
-db.getRekapByStatusDB = (status, bulan, tahun, search, limit, offset) => {
+db.getAllRekapDB = (bulan, tahun, search, limit, offset) => {
   return new Promise((resolve, reject) => {
     conn.query(
-      `SELECT rekap.*, munfiq.fullname AS munfiq, kecamatan.nama_kec FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ? AND rekap.status = ?) AND (munfiq.fullname LIKE ? OR kecamatan.nama_kec LIKE ? OR rekap.kode_tabung LIKE ?) ORDER BY rekap.id_rekap DESC LIMIT ? OFFSET ?`,
-      [bulan, tahun, status, `%${search}%`, `%${search}%`, `%${search}%`, limit, offset],
+      `SELECT rekap.*, munfiq.id_munfiq, munfiq.fullname AS munfiq, kecamatan.id_kec, kecamatan.nama_kec FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ?) AND (munfiq.fullname LIKE ? OR munfiq.kode_tabung LIKE ?) ORDER BY rekap.id_rekap DESC LIMIT ? OFFSET ?`,
+      [bulan, tahun, `%${search}%`, `%${search}%`, limit, offset],
       (err, result) => {
         if (err) {
           return reject(err);
@@ -87,17 +50,68 @@ db.getRekapByStatusDB = (status, bulan, tahun, search, limit, offset) => {
 
 /**
  *
- * @param {*} status
- * @param {*} bulan
- * @param {*} tahun
- * @param {*} search
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @param {*} search optional
+ * @returns Total data rekapan perbulan
+ */
+
+db.totalAllRekapDB = (bulan, tahun, search) => {
+  return new Promise((resolve, reject) => {
+    conn.query(
+      `SELECT IFNULL(COUNT(rekap.id_rekap), 0) AS total_rekap FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ?) AND (munfiq.fullname LIKE ? OR rekap.kode_tabung LIKE ?)`,
+      [bulan, tahun, `%${search}%`, `%${search}%`, search],
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve(result[0]);
+      },
+    );
+  });
+};
+
+/**
+ *
+ * @param {*} status required
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @param {*} search optional
+ * @param {*} limit optional
+ * @param {*} offset optional
+ * @returns Rekapan berdasarkan status penarikan, tahun dan bulan
+ */
+
+db.getRekapByStatusDB = (status, bulan, tahun, search, limit, offset) => {
+  return new Promise((resolve, reject) => {
+    conn.query(
+      `SELECT rekap.*, munfiq.fullname AS munfiq, kecamatan.nama_kec FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ? AND rekap.status = ?) AND (munfiq.fullname LIKE ? OR rekap.kode_tabung LIKE ?) ORDER BY rekap.id_rekap DESC LIMIT ? OFFSET ?`,
+      [bulan, tahun, status, `%${search}%`, `%${search}%`, limit, offset],
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve(result);
+      },
+    );
+  });
+};
+
+/**
+ *
+ * @param {*} status required
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @param {*} search optional
  * @returns Total data rekap berdasarkan status penarikan
  */
 
 db.totalRekapByStatusDB = (status, bulan, tahun, search) => {
   return new Promise((resolve, reject) => {
     conn.query(
-      `SELECT COUNT(rekap.id_rekap) AS total_rekap FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ? AND rekap.status = ?) AND (munfiq.fullname LIKE ? OR kecamatan.nama_kec LIKE ? OR rekap.kode_tabung LIKE ?)`,
+      `SELECT COUNT(rekap.id_rekap) AS total_rekap FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ? AND rekap.status = ?) AND (munfiq.fullname LIKE ? OR rekap.kode_tabung LIKE ?)`,
       [bulan, tahun, status, `%${search}%`, `%${search}%`, `%${search}%`],
       (err, result) => {
         if (err) {
@@ -112,12 +126,12 @@ db.totalRekapByStatusDB = (status, bulan, tahun, search) => {
 
 /**
  *
- * @param {*} id_kec
- * @param {*} bulan
- * @param {*} tahun
- * @param {*} search
- * @param {*} limit
- * @param {*} offset
+ * @param {*} id_kec required
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @param {*} search optional
+ * @param {*} limit optional
+ * @param {*} offset optional
  * @returns Rekapan berdasarkan kecamatan yang dipilih, tahun dan bulan
  */
 
@@ -139,10 +153,10 @@ db.getRekapByKecamatanDB = (id_kec, bulan, tahun, search, limit, offset) => {
 
 /**
  *
- * @param {*} id_kec
- * @param {*} bulan
- * @param {*} tahun
- * @param {*} search
+ * @param {*} id_kec required
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @param {*} search optional
  * @returns Total data rekap berdasarkan kecamatan
  */
 
@@ -164,15 +178,31 @@ db.totalRekapByKecamatanDB = (id_kec, bulan, tahun, search) => {
 
 /**
  *
- * @param {*} bulan
- * @param {*} tahun
- * @returns Total nominal penarikan seluruh kecamatan perbulan
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @returns Total nominal seluruh kecamatan perbulan
  */
 
-db.getRekapTotalPenarikanDB = (bulan, tahun) => {
+db.getRekapTotalNominalPerbulanDB = (bulan, tahun) => {
   return new Promise((resolve, reject) => {
     conn.query(
-      `SELECT IFNULL(SUM(rekap.nominal), 0) AS total_penarikan FROM rekap WHERE bulan = ? AND tahun = ? AND status = '1'`,
+      `SELECT IFNULL(SUM(rekap.nominal), 0) AS total FROM rekap WHERE bulan = ? AND tahun = ? AND status = '1'`,
+      [bulan, tahun],
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve(result[0]);
+      },
+    );
+  });
+};
+
+db.getRekapTotalPenarikanPerbulanDB = (bulan, tahun) => {
+  return new Promise((resolve, reject) => {
+    conn.query(
+      `SELECT IFNULL(COUNT(id_rekap), 0) AS total FROM rekap WHERE status = '1' AND bulan = ? AND tahun = ?`,
       [bulan, tahun],
       (err, result) => {
         if (err) {
@@ -187,16 +217,32 @@ db.getRekapTotalPenarikanDB = (bulan, tahun) => {
 
 /**
  *
- * @param {*} id_kec
- * @param {*} bulan
- * @param {*} tahun
- * @returns Total nominal penarikan perkecamatan
+ * @param {*} id_kec required
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @returns Total nominal perkecamatan perbulan
  */
 
-db.getRekapTotalPenarikanKecamatanDB = (id_kec, bulan, tahun) => {
+db.getRekapNominalKecamatanBulanDB = (id_kec, bulan, tahun) => {
   return new Promise((resolve, reject) => {
     conn.query(
-      `SELECT IFNULL(SUM(rekap.nominal), 0) AS total_penarikan FROM rekap JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE kecamatan.id_kec = ? AND rekap.bulan = ? AND rekap.tahun = ? AND rekap.status = '1'`,
+      `SELECT IFNULL(SUM(nominal), 0) AS total FROM rekap WHERE id_kec = ? AND bulan = ? AND tahun = ? AND status = '1'`,
+      [id_kec, bulan, tahun],
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve(result[0]);
+      },
+    );
+  });
+};
+
+db.getRekapPenarikanKecamatanBulanDB = (id_kec, bulan, tahun) => {
+  return new Promise((resolve, reject) => {
+    conn.query(
+      `SELECT IFNULL(COUNT(id_rekap), 0) AS total FROM rekap WHERE id_kec = ? AND bulan = ? AND tahun = ? AND status = '1'`,
       [id_kec, bulan, tahun],
       (err, result) => {
         if (err) {
@@ -211,16 +257,32 @@ db.getRekapTotalPenarikanKecamatanDB = (id_kec, bulan, tahun) => {
 
 /**
  *
- * @param {*} id_user
- * @param {*} bulan
- * @param {*} tahun
- * @returns Total nominal penarikan milik masing masing petugas
+ * @param {*} id_user required
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @returns Total nominal penarikan milik masing masing petugas perbulan
  */
 
-db.getRekapTotalPenarikanPetugasDB = (id_user, bulan, tahun) => {
+db.getRekapNominalPetugasBulanDB = (id_user, bulan, tahun) => {
   return new Promise((resolve, reject) => {
     conn.query(
-      `SELECT IFNULL(SUM(rekap.nominal), 0) AS total_penarikan FROM rekap JOIN users ON rekap.id_user = users.id_user WHERE users.id_user = ? AND rekap.bulan = ? AND rekap.tahun = ?`,
+      `SELECT IFNULL(SUM(nominal), 0) AS total FROM rekap WHERE id_user = ? AND bulan = ? AND tahun = ?`,
+      [id_user, bulan, tahun],
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve(result[0]);
+      },
+    );
+  });
+};
+
+db.getRekapPenarikanPetugasBulanDB = (id_user, bulan, tahun) => {
+  return new Promise((resolve, reject) => {
+    conn.query(
+      `SELECT IFNULL(COUNT(id_rekap), 0) AS total FROM rekap WHERE id_user = ? AND bulan = ? AND tahun = ? AND status = '1'`,
       [id_user, bulan, tahun],
       (err, result) => {
         if (err) {
@@ -235,13 +297,13 @@ db.getRekapTotalPenarikanPetugasDB = (id_user, bulan, tahun) => {
 
 /**
  *
- * @param {*} id_kec
- * @param {*} bulan
- * @param {*} tahun
- * @param {*} search
- * @param {*} limit
- * @param {*} offset
- * @returns Rekapan dengan status belum ditarik pada petugas
+ * @param {*} id_kec required
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @param {*} search optional
+ * @param {*} limit optional
+ * @param {*} offset optional
+ * @returns Rekapan dengan status belum ditarik pada petugas perbulan
  */
 
 db.getRekapBelumDitarikPetugasDB = (id_kec, bulan, tahun, search, limit, offset) => {
@@ -262,12 +324,12 @@ db.getRekapBelumDitarikPetugasDB = (id_kec, bulan, tahun, search, limit, offset)
 
 /**
  *
- * @param {*} id_kec
- * @param {*} id_user
- * @param {*} bulan
- * @param {*} tahun
- * @param {*} search
- * @returns Total rekapan data belum ditarik oleh petugas
+ * @param {*} id_kec required
+ * @param {*} id_user required
+ * @param {*} bulan required
+ * @param {*} tahun required
+ * @param {*} search optional
+ * @returns Total rekapan data belum ditarik oleh petugas perbulan
  */
 
 db.totalRekapBelumDitarikPetugasDB = (id_kec, bulan, tahun, search) => {
@@ -288,7 +350,7 @@ db.totalRekapBelumDitarikPetugasDB = (id_kec, bulan, tahun, search) => {
 
 /**
  *
- * @param {*} kode_tabung
+ * @param {*} kode_tabung required
  * @description Check status tabung sebelum update
  */
 
@@ -310,10 +372,10 @@ db.beforeUpdateRekapDB = (kode_tabung) => {
 
 /**
  *
- * @param {*} nominal
- * @param {*} id_user
- * @param {*} id_rekap
- * @returns Update data rekap oleh petugas
+ * @param {*} nominal required
+ * @param {*} id_user required
+ * @param {*} id_rekap required
+ * @description Update data rekap oleh petugas
  */
 
 db.updateCurrentRekapDB = (nominal, id_user, id_rekap) => {
@@ -324,6 +386,22 @@ db.updateCurrentRekapDB = (nominal, id_user, id_rekap) => {
       (err) => {
         if (err) {
           return reject(err);
+        }
+
+        return resolve();
+      },
+    );
+  });
+};
+
+db.afterUpdatePenarikanDB = (bulan, tahun, nominal, kode_tabung) => {
+  return new Promise((resolve, reject) => {
+    conn.query(
+      `UPDATE rekap SET nominal = ? WHERE bulan = ? AND tahun = ? AND kode_tabung = ?`,
+      [nominal, bulan, tahun, kode_tabung],
+      (error) => {
+        if (error) {
+          return reject(error);
         }
 
         return resolve();

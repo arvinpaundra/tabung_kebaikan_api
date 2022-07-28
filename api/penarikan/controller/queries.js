@@ -2,6 +2,16 @@ const { conn } = require('../../../config');
 
 let db = {};
 
+/**
+ *
+ * @param {*} nominal required
+ * @param {*} kode_tabung required
+ * @param {*} id_munfiq required
+ * @param {*} id_kec required
+ * @param {*} id_user required
+ * @description Membuat data penarikan tabung
+ */
+
 db.createPenarikanDB = (nominal, kode_tabung, id_munfiq, id_kec, id_user) => {
   return new Promise((resolve, reject) => {
     conn.query(
@@ -17,6 +27,14 @@ db.createPenarikanDB = (nominal, kode_tabung, id_munfiq, id_kec, id_user) => {
     );
   });
 };
+
+/**
+ *
+ * @param {*} search optional
+ * @param {*} limits optional
+ * @param {*} offset optional
+ * @returns Semua data penarikan
+ */
 
 db.getAllPenarikanDB = (search, limit, offset) => {
   return new Promise((resolve, reject) => {
@@ -34,6 +52,31 @@ db.getAllPenarikanDB = (search, limit, offset) => {
   });
 };
 
+db.getDetailPenarikanDB = (id_penarikan) => {
+  return new Promise((resolve, reject) => {
+    conn.query(
+      `SELECT * FROM penarikan WHERE id_penarikan = ?`,
+      [id_penarikan],
+      (error, result) => {
+        if (error) {
+          return reject(error);
+        }
+
+        return resolve(result[0]);
+      },
+    );
+  });
+};
+
+/**
+ *
+ * @param {*} id_user required
+ * @param {*} search optional
+ * @param {*} limit optional
+ * @param {*} offset optional
+ * @returns Data penarikan berdasarkan id_user
+ */
+
 db.getPenarikanPetugasDB = (id_user, search, limit, offset) => {
   return new Promise((resolve, reject) => {
     conn.query(
@@ -49,6 +92,12 @@ db.getPenarikanPetugasDB = (id_user, search, limit, offset) => {
     );
   });
 };
+
+/**
+ *
+ * @param {*} search optional
+ * @returns Total data seluruh penarikan
+ */
 
 db.totalPenarikanDB = (search) => {
   return new Promise((resolve, reject) => {
@@ -66,6 +115,13 @@ db.totalPenarikanDB = (search) => {
   });
 };
 
+/**
+ *
+ * @param {*} id_user required
+ * @param {*} search optional
+ * @returns Total data penarikan berdasarkan id_user
+ */
+
 db.totalPenarikanPetugasDB = (id_user, search) => {
   return new Promise((resolve, reject) => {
     conn.query(
@@ -81,6 +137,28 @@ db.totalPenarikanPetugasDB = (id_user, search) => {
     );
   });
 };
+
+db.getPenarikanTerbaruDB = () => {
+  return new Promise((resolve, reject) => {
+    conn.query(
+      `SELECT penarikan.*, munfiq.fullname AS munfiq, kecamatan.nama_kec, users.fullname AS petugas FROM penarikan JOIN munfiq ON penarikan.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON penarikan.id_kec = kecamatan.id_kec JOIN users ON penarikan.id_user = users.id_user ORDER BY id_penarikan DESC LIMIT 10`,
+      (err, result) => {
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve(result);
+      },
+    );
+  });
+};
+
+/**
+ *
+ * @param {*} nominal required
+ * @param {*} id_penarikan required
+ * @description Mengubah data penarikan (Hanya admin)
+ */
 
 db.updatePenarikanByIdDB = (nominal, id_penarikan) => {
   return new Promise((resolve, reject) => {

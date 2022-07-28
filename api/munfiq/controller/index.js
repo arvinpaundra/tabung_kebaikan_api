@@ -18,7 +18,7 @@ module.exports = {
       const { fullname, no_tlp, alamat, kelurahan } = req.body;
       const id_kec = parseInt(req.body.id_kec);
 
-      if (!fullname || !no_tlp || !alamat || !kelurahan || !id_kec) {
+      if (!fullname || !id_kec) {
         statusCode = 400;
         throw new Error('Data harus lengkap.');
       } else if (id_kec < 1) {
@@ -123,7 +123,7 @@ module.exports = {
       const id_kec = parseInt(req.body.id_kec);
       const id_munfiq = parseInt(req.params.id_munfiq);
 
-      if (!fullname || !no_tlp || !alamat || !kelurahan || !id_kec) {
+      if (!fullname || !id_kec) {
         statusCode = 400;
         throw new Error('Data harus lengkap');
       } else if (id_kec < 1 || id_munfiq < 1) {
