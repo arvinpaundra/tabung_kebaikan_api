@@ -49,6 +49,7 @@ module.exports = {
       const id_kec = parseInt(req.body.id_kec);
       const id_user = parseInt(req.body.id_user);
       const kode_tabung = req.query.kode_tabung.toUpperCase();
+      const kondisi_tabung = req.body.kondisi_tabung || '-';
 
       if (
         id_kec < 0 ||
@@ -61,7 +62,7 @@ module.exports = {
       ) {
         statusCode = 409;
         throw new Error('error');
-      } else if (nominal < 1 || !nominal) {
+      } else if (nominal < 1 || !nominal || !kondisi_tabung) {
         statusCode = 400;
         throw new Error('invalid');
       }
@@ -78,7 +79,7 @@ module.exports = {
       }
 
       await createPenarikanDB(nominal, kode_tabung, id_munfiq, id_kec, id_user);
-      await updateCurrentRekapDB(nominal, id_user, check.id_rekap);
+      await updateCurrentRekapDB(nominal, kondisi_tabung, id_user, check.id_rekap);
 
       return res.status(201).json({ data: { message: 'success' } });
     } catch (error) {

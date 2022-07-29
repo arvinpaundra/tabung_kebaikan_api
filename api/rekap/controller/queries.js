@@ -378,11 +378,11 @@ db.beforeUpdateRekapDB = (kode_tabung) => {
  * @description Update data rekap oleh petugas
  */
 
-db.updateCurrentRekapDB = (nominal, id_user, id_rekap) => {
+db.updateCurrentRekapDB = (nominal, kondisi_tabung, id_user, id_rekap) => {
   return new Promise((resolve, reject) => {
     conn.query(
-      `UPDATE rekap SET nominal = ?, tgl_tarik = CURDATE(), status = '1', id_user = ? WHERE id_rekap = ?`,
-      [nominal, id_user, id_rekap],
+      `UPDATE rekap SET nominal = ?, kondisi_tabung = ?, tgl_tarik = CURDATE(), status = '1', id_user = ? WHERE id_rekap = ?`,
+      [nominal, kondisi_tabung, id_user, id_rekap],
       (err) => {
         if (err) {
           return reject(err);
