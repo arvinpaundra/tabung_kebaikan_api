@@ -138,7 +138,7 @@ db.totalRekapByStatusDB = (status, bulan, tahun, search) => {
 db.getRekapByKecamatanDB = (id_kec, bulan, tahun, search, limit, offset) => {
   return new Promise((resolve, reject) => {
     conn.query(
-      `SELECT rekap.*, munfiq.fullname AS munfiq, kecamatan.nama_kec FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ? AND kecamatan.id_kec = ?) AND (munfiq.fullname LIKE ? OR rekap.kode_tabung LIKE ?) ORDER BY rekap.id_rekap DESC LIMIT ? OFFSET ?`,
+      `SELECT rekap.*, munfiq.fullname AS munfiq, munfiq.no_tlp, munfiq.alamat, munfiq.kelurahan, kecamatan.nama_kec FROM rekap JOIN munfiq ON rekap.id_munfiq = munfiq.id_munfiq JOIN kecamatan ON rekap.id_kec = kecamatan.id_kec WHERE (rekap.bulan = ? AND rekap.tahun = ? AND kecamatan.id_kec = ?) AND (munfiq.fullname LIKE ? OR rekap.kode_tabung LIKE ?) ORDER BY rekap.id_rekap DESC LIMIT ? OFFSET ?`,
       [bulan, tahun, id_kec, `%${search}%`, `%${search}%`, limit, offset],
       (err, result) => {
         if (err) {
