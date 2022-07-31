@@ -24,15 +24,19 @@ const userRoutes = require('./api/petugas/router');
 const munfiqRoutes = require('./api/munfiq/router');
 const penarikanRoutes = require('./api/penarikan/router');
 const rekapRoutes = require('./api/rekap/router');
+const webhookRoutes = require('./webhook');
+const notificationsRoutes = require('./api/notifications/router');
 
 const URL = '/api/v1';
 
 // routes
+app.use(`/webhook`, webhookRoutes);
 app.use(`${URL}/auth`, authRoutes);
 app.use(`${URL}/kecamatan`, kecamatanRoutes);
 app.use(`${URL}/users`, userRoutes);
 app.use(`${URL}/munfiq`, munfiqRoutes);
 app.use(`${URL}/penarikan`, penarikanRoutes);
+app.use(`${URL}/notifications`, notificationsRoutes);
 app.use(`${URL}/rekap`, rekapRoutes);
 
 // catch 404 and forward to error handler
